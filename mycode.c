@@ -7,13 +7,34 @@
 #include <time.h>
 
 // Target Bitcoin address to match
-const char* target_address = "13zb1hQbWVsc2S7ZTZnP2G4undNNpdh5so";
+const char* target_address = "1Hoyt6UBzwL5vvUSTLMQC2mwvvE5PpeSC";
 
 // Function to generate a random private key (32 bytes)
 void generate_random_private_key(unsigned char* private_key, size_t len) {
     for (size_t i = 0; i < len; i++) {
         private_key[i] = rand() % 256;
     }
+}
+
+void generate_random_private_key_desafio(unsigned char* private_key){
+    float f;
+    private_key[14]=64+(rand() % 16);
+    private_key[15]=176+(rand() % 16);
+    private_key[19]=96+(rand()%16);
+    private_key[21]=112+(rand()%16);
+    private_key[24]=64+(rand() % 16);
+    private_key[25]=rand()%16; // pode ser 0x0x, útimo x pode ser a-f ou 0-9, Além disso 0xa é igual a 0x0a
+    private_key[26]=128+(rand()% 16);
+    private_key[27]=48+(rand()%16);
+
+    private_key[28]=57+(rand()%7);
+    private_key[29]=48+(rand()%16);
+    //[31]=[30]+3
+    f=(rand()%13);
+    private_key[30]=112+f;
+    private_key[31]=48+(f+3);
+
+
 }
 
 // Function to perform SHA-256
@@ -103,31 +124,46 @@ int main() {
     // Seed random number generator
     srand(time(NULL));
 
-    // Initialize secp256k1 context
+    //Initialize secp256k1 context
     secp256k1_context* ctx = secp256k1_context_create(SECP256K1_CONTEXT_SIGN);
 
-    // Loop until the Bitcoin address matches the target address
+    //Loop until the Bitcoin address matches the target address
     char generated_address[50];
     int match_found = 0;
     int iterations = 0;
     unsigned long keys_processed = 0;
     time_t start_time = time(NULL);
+   //403b3d4fcff56a92f335a0cf570e4xbxb17b2a6x867x8xax4x0x8x3x3x3x7x3x
 
+    
     unsigned char private_key[32] = {
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02,
-            0x83, 0x2E, 0xD7, 0x4F, 0x1B, 0x4E, 0x35, 0xEE
+          0x40,0x3b,0x3d,0x4f,0xcf,0xf5,0x6a,0x92,
+          0xf3,0x35,0xa0,0xcf,0x57,0x0e,0x40,0xb0,
+          0xb1,0x7b,0x2a,0x60,0x86,0x70,0x86,0xa8,
+          0x40,0x00,0x80,0x30,0x30,0x30,0x70,0x30
     };
+
+    /*printf("\nChave privada antes da geração aleatória\n");
+        print_private_key(private_key,sizeof(private_key));
+    printf("\nChave privada depois da geração aleatória\n");
+        generate_random_private_key_desafio(private_key);
+        print_private_key(private_key,sizeof(private_key));
+        generate_random_private_key_desafio(private_key);
+        print_private_key(private_key,sizeof(private_key));*/
+    
+        
+      
 
 
     while (!match_found) {
-        //unsigned char private_key[32];
-
+      
+        //print_private_key(private_key,sizeof(private_key));
+        generate_random_private_key_desafio(private_key);
+        /*
         // Increment the private key
             for (int i = 31; i >= 0; i--) {
                 if (++private_key[i] != 0) break;  // Stop incrementing if no overflow
-            }  
+            }  */
 
         // Generate a random private key
         //generate_random_private_key(private_key, sizeof(private_key));
@@ -150,10 +186,10 @@ int main() {
         // Compare generated address with target address
         if (strcmp(generated_address, target_address) == 0) {
             printf("Match found!\n");
-            printf("Private Key: ");
+            /*printf("Private Key: ");
             for (int i = 0; i < 32; i++) {
                 printf("%02x", private_key[i]);
-            }
+            }*/
             printf("\n");
             printf("Bitcoin Address: %s\n", generated_address);
             match_found = 1;
