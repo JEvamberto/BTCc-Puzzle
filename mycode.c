@@ -30,9 +30,9 @@ void generate_random_private_key_desafio(unsigned char* private_key){
     private_key[28]=57+(rand()%7);
     private_key[29]=48+(rand()%16);
     //[31]=[30]+3
-    f=(rand()%13);
+    /*f=(rand()%13);
     private_key[30]=112+f;
-    private_key[31]=48+(f+3);
+    private_key[31]=48+(f+3);*/
 
 
 }
@@ -140,7 +140,7 @@ int main() {
           0x40,0x3b,0x3d,0x4f,0xcf,0xf5,0x6a,0x92,
           0xf3,0x35,0xa0,0xcf,0x57,0x0e,0x40,0xb0,
           0xb1,0x7b,0x2a,0x60,0x86,0x70,0x86,0xa8,
-          0x40,0x00,0x80,0x30,0x30,0x30,0x70,0x30
+          0x40,0x00,0x80,0x30,0x30,0x30,0x74,0x37
     };
 
     /*printf("\nChave privada antes da geração aleatória\n");
@@ -186,10 +186,10 @@ int main() {
         // Compare generated address with target address
         if (strcmp(generated_address, target_address) == 0) {
             printf("Match found!\n");
-            /*printf("Private Key: ");
+            printf("Private Key: ");
             for (int i = 0; i < 32; i++) {
                 printf("%02x", private_key[i]);
-            }*/
+            }
             printf("\n");
             printf("Bitcoin Address: %s\n", generated_address);
             match_found = 1;
