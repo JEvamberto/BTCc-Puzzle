@@ -5,8 +5,11 @@
 #include <openssl/ripemd.h>
 #include <secp256k1.h>
 #include <time.h>
+#include <pthread.h>
 
 // Target Bitcoin address to match
+
+#define NUM_THREADS 10
 const char* target_address = "1Hoyt6UBzwL5vvUSTLMQC2mwvvE5PpeSC";
 
 // Function to generate a random private key (32 bytes)
@@ -119,12 +122,9 @@ void print_private_key(const unsigned char* private_key, size_t key_len) {
     }
     printf("\n");
 }
-
-int main() {
-    // Seed random number generator
-    srand(time(NULL));
-
-    //Initialize secp256k1 context
+void* gerarAndVerificarKey(void* idThreads){
+    long id_t=(long) idThreads;
+       //Initialize secp256k1 context
     secp256k1_context* ctx = secp256k1_context_create(SECP256K1_CONTEXT_SIGN);
 
     //Loop until the Bitcoin address matches the target address
@@ -203,7 +203,7 @@ int main() {
         if (current_time > start_time) {
             double elapsed_seconds = difftime(current_time, start_time);
             double keys_per_second = keys_processed / elapsed_seconds;
-            printf("%d address checked; (%.2f keys/sec); last_pk: ",iterations, keys_per_second);
+            printf("id-Threads:%ld | %d address checked; (%.2f keys/sec); last_pk: ",id_t,iterations, keys_per_second);
             print_private_key(private_key, sizeof(private_key));
             start_time = current_time;  // Reset the time for the next interval
             keys_processed = 0;  // Reset key counter for the next second
@@ -212,6 +212,29 @@ int main() {
 
     // Clean up secp256k1 context
     secp256k1_context_destroy(ctx);
+}
+
+int main() {
+    // Seed random number generator
+    pthread_t threads[NUM_THREADS];
+    srand(time(NULL));
+
+    int status;
+    long t;
+    for (t=0; t<NUM_THREADS; t++){
+         status = pthread_create(&threads[t], NULL, gerarAndVerificarKey,(void*)t);
+         if(status){
+            printf("Error ao criar treads %ld\n",t);
+            exit(-1);
+         }
+    }
+    //esperar que todos as threads terminem
+    for(t = 0; t < NUM_THREADS; t++ ){
+        pthread_join(threads[t],NULL);
+    }
+    printf("\nTodas threads terminaram estou na main");
+    pthread_exit(NULL);
+ 
 
     return 0;
 }
