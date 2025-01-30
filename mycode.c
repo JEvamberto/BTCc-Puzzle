@@ -20,23 +20,15 @@ void generate_random_private_key(unsigned char* private_key, size_t len) {
 }
 
 void generate_random_private_key_desafio(unsigned char* private_key){
-    float f;
+   
     private_key[14]=64+(rand() % 16);
     private_key[15]=176+(rand() % 16);
     private_key[19]=96+(rand()%16);
     private_key[21]=112+(rand()%16);
     private_key[24]=64+(rand() % 16);
-    private_key[25]=rand()%16; // pode ser 0x0x, útimo x pode ser a-f ou 0-9, Além disso 0xa é igual a 0x0a
-    private_key[26]=128+(rand()% 16);
-    private_key[27]=48+(rand()%16);
-
+    private_key[25]=rand()%16; // pode ser 0x0x, útimo x pode ser a-f ou 0-9, Além disso 0xa é igual a 0x0a:
     private_key[28]=57+(rand()%7);
-    private_key[29]=48+(rand()%16);
-    //[31]=[30]+3
-    /*f=(rand()%13);
-    private_key[30]=112+f;
-    private_key[31]=48+(f+3);*/
-
+    
 
 }
 
@@ -123,7 +115,7 @@ void print_private_key(const unsigned char* private_key, size_t key_len) {
     printf("\n");
 }
 void* gerarAndVerificarKey(void* idThreads){
-    long id_t=(long) idThreads;
+    long id_t = (long) idThreads;
        //Initialize secp256k1 context
     secp256k1_context* ctx = secp256k1_context_create(SECP256K1_CONTEXT_SIGN);
 
@@ -137,10 +129,10 @@ void* gerarAndVerificarKey(void* idThreads){
 
     
     unsigned char private_key[32] = {
-          0x40,0x3b,0x3d,0x4f,0xcf,0xf5,0x6a,0x92,
+            0x40,0x3b,0x3d,0x4f,0xcf,0xf5,0x6a,0x92,
           0xf3,0x35,0xa0,0xcf,0x57,0x0e,0x40,0xb0,
           0xb1,0x7b,0x2a,0x60,0x86,0x70,0x86,0xa8,
-          0x40,0x00,0x80,0x30,0x30,0x30,0x74,0x37
+          0x40,0x00,0x86,0x3d,0x30,0x3c,0x74,0x37
     };
 
     /*printf("\nChave privada antes da geração aleatória\n");
@@ -150,11 +142,7 @@ void* gerarAndVerificarKey(void* idThreads){
         print_private_key(private_key,sizeof(private_key));
         generate_random_private_key_desafio(private_key);
         print_private_key(private_key,sizeof(private_key));*/
-    
-        
-      
-
-
+ 
     while (!match_found) {
       
         //print_private_key(private_key,sizeof(private_key));
@@ -191,11 +179,11 @@ void* gerarAndVerificarKey(void* idThreads){
                 printf("%02x", private_key[i]);
             }
             printf("\n");
-            printf("Bitcoin Address: %s\n", generated_address);
+            printf("ID_THREADS: %ld Bitcoin Address: %s\n",id_t,generated_address);
             match_found = 1;
         }
 
-        keys_processed++;
+      /* keys_processed++;
         iterations++;
 
         // Calculate keys per second every 1 second
@@ -207,7 +195,7 @@ void* gerarAndVerificarKey(void* idThreads){
             print_private_key(private_key, sizeof(private_key));
             start_time = current_time;  // Reset the time for the next interval
             keys_processed = 0;  // Reset key counter for the next second
-        }
+        }*/
     }
 
     // Clean up secp256k1 context
