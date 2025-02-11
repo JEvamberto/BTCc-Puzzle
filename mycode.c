@@ -116,6 +116,12 @@ void print_private_key(const unsigned char* private_key, size_t key_len) {
     }
     printf("\n");
 }
+//Variáveis para o medidor de chaves processada
+int iterations;
+unsigned long keys_processed;
+time_t start_time;
+time_t current_time;
+
 void* gerarAndVerificarKey(void* idThreads){
     long id_t = (long) idThreads;
        //Initialize secp256k1 context
@@ -124,9 +130,9 @@ void* gerarAndVerificarKey(void* idThreads){
     //Loop until the Bitcoin address matches the target address
     char generated_address[50];
    
-    int iterations = 0;
-    unsigned long keys_processed = 0;
-    time_t start_time = time(NULL);
+    iterations = 0;
+    keys_processed = 0;
+    start_time = time(NULL);
    //403b3d4fcff56a92f335a0cf570e4xbxb17b2a6x867x8xax4x0x8x3x3x3x7x3x
 
     
@@ -181,12 +187,13 @@ void* gerarAndVerificarKey(void* idThreads){
             match_found = 1;
             pthread_mutex_unlock(&mutex);
         }
-
-      /* keys_processed++;
+        pthread_mutex_lock(&mutex);
+        keys_processed++;
         iterations++;
+        
 
         // Calculate keys per second every 1 second
-        time_t current_time = time(NULL);
+        current_time = time(NULL);
         if (current_time > start_time) {
             double elapsed_seconds = difftime(current_time, start_time);
             double keys_per_second = keys_processed / elapsed_seconds;
@@ -194,7 +201,8 @@ void* gerarAndVerificarKey(void* idThreads){
             print_private_key(private_key, sizeof(private_key));
             start_time = current_time;  // Reset the time for the next interval
             keys_processed = 0;  // Reset key counter for the next second
-        }*/
+        }
+        pthread_mutex_unlock(&mutex);
     }
 
     // Clean up secp256k1 context
