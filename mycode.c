@@ -11,7 +11,9 @@
 
 #define NUM_THREADS 10
 const char* target_address = "1Hoyt6UBzwL5vvUSTLMQC2mwvvE5PpeSC";
-
+int match_found=0;
+//mutex
+pthread_mutex_t mutex;
 // Function to generate a random private key (32 bytes)
 void generate_random_private_key(unsigned char* private_key, size_t len) {
     for (size_t i = 0; i < len; i++) {
@@ -121,7 +123,7 @@ void* gerarAndVerificarKey(void* idThreads){
 
     //Loop until the Bitcoin address matches the target address
     char generated_address[50];
-    int match_found = 0;
+   
     int iterations = 0;
     unsigned long keys_processed = 0;
     time_t start_time = time(NULL);
@@ -135,13 +137,7 @@ void* gerarAndVerificarKey(void* idThreads){
           0x40,0x00,0x86,0x3d,0x30,0x3c,0x74,0x37
     };
 
-    /*printf("\nChave privada antes da geração aleatória\n");
-        print_private_key(private_key,sizeof(private_key));
-    printf("\nChave privada depois da geração aleatória\n");
-        generate_random_private_key_desafio(private_key);
-        print_private_key(private_key,sizeof(private_key));
-        generate_random_private_key_desafio(private_key);
-        print_private_key(private_key,sizeof(private_key));*/
+  
  
     while (!match_found) {
       
@@ -179,8 +175,11 @@ void* gerarAndVerificarKey(void* idThreads){
                 printf("%02x", private_key[i]);
             }
             printf("\n");
-            printf("ID_THREADS: %ld Bitcoin Address: %s\n",id_t,generated_address);
+           
+            printf("ID_THREADS: %ld, Bitcoin Address: %s\n",id_t,generated_address);
+            pthread_mutex_lock(&mutex);
             match_found = 1;
+            pthread_mutex_unlock(&mutex);
         }
 
       /* keys_processed++;
@@ -209,6 +208,8 @@ int main() {
 
     int status;
     long t;
+    pthread_mutex_init(&mutex, NULL);
+   
     for (t=0; t<NUM_THREADS; t++){
          status = pthread_create(&threads[t], NULL, gerarAndVerificarKey,(void*)t);
          if(status){
@@ -220,7 +221,11 @@ int main() {
     for(t = 0; t < NUM_THREADS; t++ ){
         pthread_join(threads[t],NULL);
     }
+
+
     printf("\nTodas threads terminaram estou na main");
+    
+    pthread_mutex_destroy(&mutex);
     pthread_exit(NULL);
  
 
