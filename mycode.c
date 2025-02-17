@@ -129,12 +129,10 @@ void* gerarAndVerificarKey(void* idThreads){
 
     //Loop until the Bitcoin address matches the target address
     char generated_address[50];
-   
+    FILE *arq;
     iterations = 0;
     keys_processed = 0;
     start_time = time(NULL);
-   //403b3d4fcff56a92f335a0cf570e4xbxb17b2a6x867x8xax4x0x8x3x3x3x7x3x
-
     
     unsigned char private_key[32] = {
             0x40,0x3b,0x3d,0x4f,0xcf,0xf5,0x6a,0x92,
@@ -175,14 +173,22 @@ void* gerarAndVerificarKey(void* idThreads){
 
         // Compare generated address with target address
         if (strcmp(generated_address, target_address) == 0) {
+            arq = fopen("ChavePrivadas.txt","a");
+            if(arq == NULL){
+                printf("\nFalha ao criar/abrir arquivo");
+                exit(1);
+            }
             printf("Match found!\n");
             printf("Private Key: ");
+            fprintf(arq,"Bitcoin Address: %s Private key: ",generated_address);
             for (int i = 0; i < 32; i++) {
                 printf("%02x", private_key[i]);
+                fprintf(arq,"%02x",private_key[i]);
             }
+            fprintf(arq,"\n");
             printf("\n");
-           
             printf("ID_THREADS: %ld, Bitcoin Address: %s\n",id_t,generated_address);
+            fclose(arq);
             pthread_mutex_lock(&mutex);
             match_found = 1;
             pthread_mutex_unlock(&mutex);
