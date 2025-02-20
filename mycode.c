@@ -9,15 +9,25 @@
 
 // Target Bitcoin address to match
 
-#define NUM_THREADS 10
-const char* target_address = "1Hoyt6UBzwL5vvUSTLMQC2mwvvE5PpeSC";
+
 int match_found=0;
+typedef struct {
+    long thread_id;
+    const char* target_address;
+}thread_dados;
 //mutex
 pthread_mutex_t mutex;
 // Function to generate a random private key (32 bytes)
 void generate_random_private_key(unsigned char* private_key, size_t len) {
     for (size_t i = 0; i < len; i++) {
         private_key[i] = rand() % 256;
+    }
+}
+
+//Incrementa do inicio
+void generate_inicio_private_key(unsigned char* private_key){
+    for(int i=31; i>=0; i--){
+        if(++private_key[i] !=0)break;
     }
 }
 
@@ -122,8 +132,15 @@ unsigned long keys_processed;
 time_t start_time;
 time_t current_time;
 
-void* gerarAndVerificarKey(void* idThreads){
-    long id_t = (long) idThreads;
+unsigned char private_key[32] = {
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+};
+
+void* gerarAndVerificarKey(void* infThreads){
+    thread_dados* infoThread = (thread_dados*) infThreads;
        //Initialize secp256k1 context
     secp256k1_context* ctx = secp256k1_context_create(SECP256K1_CONTEXT_SIGN);
 
@@ -134,25 +151,15 @@ void* gerarAndVerificarKey(void* idThreads){
     keys_processed = 0;
     start_time = time(NULL);
     
-    unsigned char private_key[32] = {
-            0x40,0x3b,0x3d,0x4f,0xcf,0xf5,0x6a,0x92,
-          0xf3,0x35,0xa0,0xcf,0x57,0x0e,0x40,0xb0,
-          0xb1,0x7b,0x2a,0x60,0x86,0x70,0x86,0xa8,
-          0x40,0x00,0x86,0x3d,0x30,0x3c,0x74,0x37
-    };
+   
 
-  
- 
     while (!match_found) {
       
         //print_private_key(private_key,sizeof(private_key));
-        generate_random_private_key_desafio(private_key);
-        /*
-        // Increment the private key
-            for (int i = 31; i >= 0; i--) {
-                if (++private_key[i] != 0) break;  // Stop incrementing if no overflow
-            }  */
-
+        pthread_mutex_lock(&mutex);
+        //generate_random_private_key_desafio(private_key);
+        generate_inicio_private_key(private_key);
+        pthread_mutex_unlock(&mutex);
         // Generate a random private key
         //generate_random_private_key(private_key, sizeof(private_key));
 
@@ -172,7 +179,7 @@ void* gerarAndVerificarKey(void* idThreads){
         generate_bitcoin_address(pubkey_serialized, pubkey_len, generated_address);
 
         // Compare generated address with target address
-        if (strcmp(generated_address, target_address) == 0) {
+        if (strcmp(generated_address, infoThread->target_address) == 0) {
             arq = fopen("ChavePrivadas.txt","a");
             if(arq == NULL){
                 printf("\nFalha ao criar/abrir arquivo");
@@ -187,7 +194,7 @@ void* gerarAndVerificarKey(void* idThreads){
             }
             fprintf(arq,"\n");
             printf("\n");
-            printf("ID_THREADS: %ld, Bitcoin Address: %s\n",id_t,generated_address);
+            printf("ID_THREADS: %ld, Bitcoin Address: %s\n",infoThread->thread_id,generated_address);
             fclose(arq);
             pthread_mutex_lock(&mutex);
             match_found = 1;
@@ -203,7 +210,7 @@ void* gerarAndVerificarKey(void* idThreads){
         if (current_time > start_time) {
             double elapsed_seconds = difftime(current_time, start_time);
             double keys_per_second = keys_processed / elapsed_seconds;
-            printf("id-Threads:%ld | %d address checked; (%.2f keys/sec); last_pk: ",id_t,iterations, keys_per_second);
+            printf("id-Threads:%ld | %d address checked; (%.2f keys/sec); last_pk: ",infoThread->thread_id,iterations, keys_per_second);
             print_private_key(private_key, sizeof(private_key));
             start_time = current_time;  // Reset the time for the next interval
             keys_processed = 0;  // Reset key counter for the next second
@@ -215,19 +222,42 @@ void* gerarAndVerificarKey(void* idThreads){
     secp256k1_context_destroy(ctx);
 }
 
-int main() {
-    // Seed random number generator
-    pthread_t threads[NUM_THREADS];
-    srand(time(NULL));
+int main(int argc, char *argv[]) {
+    const char* target_address;
+    int NUM_THREADS;
 
+    if ( argc < 2){
+        printf("\nUso: %s endereçoBitcoin quantidadeThreads  \nExemplo 0: ./main 1E32GPWgDyeyQac4aJxm9HVoLrrEYPnM4N 2\n",argv[0]);
+        printf("Exemplo 1: ./main 1E32GPWgDyeyQac4aJxm9HVoLrrEYPnM4N\n");
+        printf("Não informando a quantidade de threads o padrão  é 2 threads");
+        return 1;
+    }
+    if((strlen(argv[1])) > 30){//Verificação simples
+       target_address = argv[1];
+       if( argc >2 ){
+        NUM_THREADS= atoi(argv[2]);
+       }else{
+         NUM_THREADS=2;
+       }
+    }else{
+        printf("Endereço bitcoin inválido");
+        return 1;
+    }
+    
+    // Seed random number generator
+    srand(time(NULL));
+    pthread_t threads[NUM_THREADS];
+    thread_dados infoThread[NUM_THREADS];
     int status;
     long t;
     pthread_mutex_init(&mutex, NULL);
    
     for (t=0; t<NUM_THREADS; t++){
-         status = pthread_create(&threads[t], NULL, gerarAndVerificarKey,(void*)t);
+         infoThread[t].thread_id=t;
+         infoThread[t].target_address=target_address;  
+         status = pthread_create(&threads[t], NULL, gerarAndVerificarKey,(void*)&infoThread[t]);
          if(status){
-            printf("Error ao criar treads %ld\n",t);
+            printf("Error ao criar threads %ld\n",t);
             exit(-1);
          }
     }
@@ -241,7 +271,8 @@ int main() {
     
     pthread_mutex_destroy(&mutex);
     pthread_exit(NULL);
- 
+    
+    return 0;
 
     return 0;
 }
